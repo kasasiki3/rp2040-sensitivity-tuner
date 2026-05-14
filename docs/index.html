@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HIDtaiko Sensitivity Tuner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="main.css">
+  <link rel="icon" href="img/favicon.ico">
+</head>
+<body>
+
+  <header class="site-header">
+    <h1>HIDtaiko</h1>
+    <div class="header-links">
+      <a href="https://github.com/kasasiki3/HIDtaiko" target="_blank" rel="noopener" title="GitHub" class="header-link">
+        <i class="fa-brands fa-github"></i>
+      </a>
+      <a href="https://www.youtube.com/channel/UCN6--q2vATunlbG3SnSLd7g?sub_confirmation=1" target="_blank" rel="noopener" title="YouTube" class="header-link header-link--yt">
+        <i class="fa-brands fa-youtube"></i>
+      </a>
+      <a href="https://x.com/kasashiki" target="_blank" rel="noopener" title="X (Twitter)" class="header-link header-link--x">
+        <i class="fa-brands fa-x-twitter"></i>
+      </a>
+      <a href="https://zenn.dev/kasashiki" target="_blank" rel="noopener" title="Zenn" class="header-link header-link--zenn">
+        <svg viewBox="0 0 88 88" fill="currentColor" aria-hidden="true" style="width:1em;height:1em;">
+          <path d="M0 88L64 0h24L24 88H0zM64 88l24-35.3V88z"/>
+        </svg>
+      </a>
+    </div>
+    <div class="header-status">
+      <span class="status-dot" id="status-dot"></span>
+      <a class="taiko-icon" href="https://github.com/kasasiki3/HIDtaiko" target="_blank" rel="noopener" title="GitHub: kasasiki3/HIDtaiko">🥁</a>
+      <span id="situation" class="situation"></span>
+    </div>
+  </header>
+
+  <main class="app-layout">
+
+    <!-- ── Controls ── -->
+    <section class="controls-panel">
+
+      <div class="card button-card">
+        <div class="button-group">
+          <button id="connection"><i class="fa-solid fa-plug btn-icon"></i>Connect</button>
+          <button id="disconnection"><i class="fa-solid fa-plug-circle-xmark btn-icon"></i>Disconnect</button>
+          <button id="sendButton"><i class="fa-solid fa-paper-plane btn-icon"></i>Send</button>
+          <button id="requestButton"><i class="fa-solid fa-rotate btn-icon"></i>Request</button>
+          <button id="saveButton"><i class="fa-solid fa-floppy-disk btn-icon"></i>Save</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Sensitivity</div>
+
+        <div class="slider-row">
+          <div class="pad-label">
+            <img src="img/right-rim.png" alt="Right Rim">
+            <span class="pad-name">Right Rim</span>
+          </div>
+          <input id="volumeSlider1" type="range" min="0" max="500" step="5" value="80">
+          <span class="slider-value" id="text1"></span>
+        </div>
+
+        <div class="slider-row">
+          <div class="pad-label">
+            <img src="img/right-don.png" alt="Right Don">
+            <span class="pad-name">Right Don</span>
+          </div>
+          <input id="volumeSlider0" type="range" min="0" max="500" step="5" value="130">
+          <span class="slider-value" id="text0"></span>
+        </div>
+
+        <div class="slider-row">
+          <div class="pad-label">
+            <img src="img/left-don.png" alt="Left Don">
+            <span class="pad-name">Left Don</span>
+          </div>
+          <input id="volumeSlider2" type="range" min="0" max="500" step="5" value="130">
+          <span class="slider-value" id="text2"></span>
+        </div>
+
+        <div class="slider-row">
+          <div class="pad-label">
+            <img src="img/left-rim.png" alt="Left Rim">
+            <span class="pad-name">Left Rim</span>
+          </div>
+          <input id="volumeSlider3" type="range" min="0" max="500" step="5" value="80">
+          <span class="slider-value" id="text3"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Delay</div>
+
+        <div class="slider-row">
+          <span class="label">Adelay</span>
+          <input id="volumeSlider8" type="range" min="1" max="50" step="1" value="1">
+          <span class="slider-value" id="text8"></span>
+          <span class="unit">ms</span>
+        </div>
+
+        <div class="slider-row">
+          <span class="label">Bdelay</span>
+          <input id="volumeSlider4" type="range" min="1" max="80" step="1" value="10">
+          <span class="slider-value" id="text4"></span>
+          <span class="unit">ms</span>
+        </div>
+
+        <div class="slider-row">
+          <span class="label">Cdelay</span>
+          <input id="volumeSlider5" type="range" min="1" max="80" step="1" value="30">
+          <span class="slider-value" id="text5"></span>
+          <span class="unit">ms</span>
+        </div>
+
+        <div class="slider-row">
+          <span class="label">Ddelay</span>
+          <input id="volumeSlider6" type="range" min="1" max="80" step="1" value="32">
+          <span class="slider-value" id="text6"></span>
+          <span class="unit">ms</span>
+        </div>
+
+        <div class="slider-row">
+          <span class="label">Hdelay</span>
+          <input id="volumeSlider7" type="range" min="0" max="80" step="1" value="0">
+          <span class="slider-value" id="text7"></span>
+          <span class="unit">ms</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Explanation ── -->
+    <aside class="explanation-panel">
+
+      <details open>
+        <summary>How to Use</summary>
+        <div class="detail-body">
+          <ol>
+            <li>
+              Click <strong>Connect</strong> and select your device
+              <small>※ Web Serial API requires Chrome or Edge</small>
+            </li>
+            <li>Click <strong>Send</strong> to write default settings, or <strong>Request</strong> to load current settings from the device</li>
+            <li>Adjust sensitivity and delay values with the sliders</li>
+            <li>Click <strong>Send</strong> to upload the new settings to the device</li>
+            <li>
+              Click <strong>Save</strong> if you want to persist the settings
+              <small>Settings are written to the device's flash memory</small>
+            </li>
+          </ol>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Parameter Guide</summary>
+
+        <div class="explanation-section">
+          <h4>Sensitivity</h4>
+          <div class="drum-icons">
+            <div class="drum-icon-item">
+              <img src="img/left-rim.png" alt="Left Rim">
+              <span>Left Rim</span>
+            </div>
+            <div class="drum-icon-item">
+              <img src="img/left-don.png" alt="Left Don">
+              <span>Left Don</span>
+            </div>
+            <div class="drum-icon-item">
+              <img src="img/right-don.png" alt="Right Don">
+              <span>Right Don</span>
+            </div>
+            <div class="drum-icon-item">
+              <img src="img/right-rim.png" alt="Right Rim">
+              <span>Right Rim</span>
+            </div>
+          </div>
+          <p>Threshold value for each sensor. A key press is triggered when the sensor voltage exceeds this value. <strong>Lower values = higher sensitivity.</strong> If you experience double-hits, raise the sensitivity (increase the value) for the affected pad.</p>
+        </div>
+
+        <div class="explanation-section">
+          <h4>Adelay <span class="std">Default: 1 ms</span></h4>
+          <p>Lockout time after a key press before the same key can fire again. Increase this if you get double-hits on the same pad only.</p>
+        </div>
+
+        <div class="explanation-section">
+          <h4>Bdelay <span class="std">Default: 12 ms</span></h4>
+          <p>Minimum interval between consecutive Don (center) hits. If set too high, fast rolls on the center will be missed.</p>
+        </div>
+
+        <div class="explanation-section">
+          <h4>Cdelay <span class="std">Default: 30 ms</span></h4>
+          <p>Same as Bdelay but for Rim (edge) hits.</p>
+        </div>
+
+        <div class="explanation-section">
+          <h4>Ddelay <span class="std">Default: 32 ms</span></h4>
+          <p>Suppression time between a Don hit and a Rim hit (and vice versa). Increase this if hitting the center also triggers the rim, or the other way around.</p>
+        </div>
+
+        <div class="explanation-section">
+          <h4>Hdelay <span class="std">Default: 20 or 0 ms</span></h4>
+          <p>Input rate limiter for official apps and some simulators. Use this if input works in Notepad but not in a taiko simulator.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>How to Tune Sensitivity</summary>
+        <div class="detail-body">
+          <p>Repeat steps 1 → 3, aiming for the <strong>highest sensitivity with the lowest delay</strong> possible.</p>
+          <ol>
+            <li>
+              <strong>Set sensitivity</strong>
+              <small>Start from the default values and find the minimum threshold at which every hit registers reliably.</small>
+            </li>
+            <li>
+              <strong>Adjust delays</strong>
+              <small>Raise each delay until double-hits stop. Note: values above 35 ms tend to cause roll detection failures.</small>
+            </li>
+            <li>
+              <strong>Fine-tune sensitivity</strong>
+              <small>If double-hits remain after delay tuning, lower sensitivity (raise the value) for the affected pad.</small>
+            </li>
+          </ol>
+        </div>
+      </details>
+
+      <details>
+        <summary>Firmware Update</summary>
+        <div class="detail-body">
+
+          <div class="fw-step">
+            <div class="fw-step-header">
+              <span class="fw-step-num">Prep</span>
+              <span>Remove the screws from the connector and take out the board</span>
+            </div>
+            <img src="img/nezi.jpg" class="fw-img" alt="Screw locations">
+          </div>
+
+          <div class="fw-step">
+            <div class="fw-step-header">
+              <span class="fw-step-num">1</span>
+              <span>Connect to PC in DFU mode</span>
+            </div>
+            <p>Hold the <strong>BOOT button</strong> on the microcontroller board and plug in the USB cable. If Explorer shows a new storage drive, the connection was successful.</p>
+          </div>
+
+          <div class="fw-step">
+            <div class="fw-step-header">
+              <span class="fw-step-num">2</span>
+              <span>Download the firmware from GitHub</span>
+            </div>
+            <p>① Click the <strong>Code</strong> button &nbsp;→&nbsp; ② Select <strong>Download ZIP</strong> and save the file.</p>
+            <img src="img/fw_github.webp" class="fw-img" alt="GitHub Code → Download ZIP">
+            <p>Extract the downloaded ZIP archive.</p>
+          </div>
+
+          <div class="fw-step">
+            <div class="fw-step-header">
+              <span class="fw-step-num">3</span>
+              <span>Flash the .uf2 file</span>
+            </div>
+            <p>Find <code>HIDtaiko.uf2</code> in the extracted folder and <strong>drag &amp; drop</strong> it onto the DFU storage drive. When the drive disconnects automatically, flashing is complete.</p>
+            <div class="fw-path">
+              HIDtaiko-master &nbsp;›&nbsp; HIDtaiko_connector_rp2040 &nbsp;›&nbsp; original_uf2
+            </div>
+            <img src="img/fw_path.png" class="fw-img" alt="Path to the uf2 file">
+          </div>
+
+        </div>
+      </details>
+
+    </aside>
+  </main>
+
+  <script src="main.js"></script>
+</body>
+</html>

@@ -1,35 +1,51 @@
 let port;
 let writer;
-
-let settings = [200, 200, 200, 200, 200, 200, 200, 200, 200];
-
-const BUTTON_CLICK_EVENT = document.getElementById("connection");
-const BUTTON_CLICK_EVENT_DISC = document.getElementById("disconnection");
-const BUTTON_CLICK_EVENT_send = document.getElementById("sendButton");
-const BUTTON_CLICK_EVENT_request = document.getElementById("requestButton");
-const BUTTON_CLICK_EVENT_save = document.getElementById("saveButton");
-
-const situation_alert = document.getElementById("situation");
-
 let reader;
-situation_alert.textContent = "Not connected";
+let isOperating = false;
 
-const status_dot = document.getElementById("status-dot");
+let settings = new Array(9).fill(0);
+
+const btnConnect    = document.getElementById("connection");
+const btnDisconnect = document.getElementById("disconnection");
+const btnSend       = document.getElementById("sendButton");
+const btnRequest    = document.getElementById("requestButton");
+const btnSave       = document.getElementById("saveButton");
+const situationEl   = document.getElementById("situation");
+const statusDot     = document.getElementById("status-dot");
+
 function setDot(state) {
-  status_dot.className = "status-dot" + (state ? " is-" + state : "");
+  statusDot.className = "status-dot" + (state ? " is-" + state : "");
 }
 
-BUTTON_CLICK_EVENT.addEventListener("click", async () => {
+function isConnected() {
+  return writer != null;
+}
+
+// Initialize settings and text from HTML slider defaults
+for (let i = 0; i <= 8; i++) {
+  const textEl = document.getElementById(`text${i}`);
+  const slider = document.getElementById(`volumeSlider${i}`);
+  settings[i] = parseInt(slider.value);
+  textEl.textContent = slider.value;
+
+  slider.addEventListener("input", () => {
+    textEl.textContent = slider.value;
+    settings[i] = parseInt(slider.value);
+  });
+}
+
+situationEl.textContent = "Not connected";
+
+btnConnect.addEventListener("click", async () => {
   try {
     if (port && port.readable) {
-      console.log("Closing existing port...");
-      if (writer) writer.releaseLock();
-      if (reader) reader.releaseLock();
+      if (writer) { writer.releaseLock(); writer = null; }
+      if (reader) { reader.releaseLock(); reader = null; }
       await port.close();
     }
 
     setDot("connecting");
-    situation_alert.textContent = "Selecting...";
+    situationEl.textContent = "Selecting...";
 
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
@@ -38,113 +54,115 @@ BUTTON_CLICK_EVENT.addEventListener("click", async () => {
     reader = port.readable.getReader();
 
     setDot("connected");
-    situation_alert.textContent = "RP2040 connected";
-    console.log("Port connected successfully!");
-
-    const data = new TextEncoder().encode("Hello, Serial!\n");
-    await writer.write(data);
-    console.log("Data sent: Hello, Serial!");
+    situationEl.textContent = "RP2040 connected";
   } catch (error) {
     setDot("error");
-    situation_alert.textContent = "Connection failed";
-    console.error("Error:", error);
+    situationEl.textContent = "Connection failed";
+    writer = null;
+    reader = null;
+    console.error("Connect error:", error);
   }
 });
 
-window.addEventListener("beforeunload", async () => {
-  if (writer) writer.releaseLock();
-  if (reader) reader.releaseLock();
-  if (port) await port.close();
-});
-
-BUTTON_CLICK_EVENT_DISC.addEventListener("click", async () => {
-  if (writer) writer.releaseLock();
-  if (reader) reader.releaseLock();
-  if (port) await port.close();
+btnDisconnect.addEventListener("click", async () => {
+  if (writer) { writer.releaseLock(); writer = null; }
+  if (reader) { reader.releaseLock(); reader = null; }
+  if (port) { await port.close(); port = null; }
   setDot(null);
-  situation_alert.textContent = "Disconnected";
+  situationEl.textContent = "Disconnected";
 });
 
-BUTTON_CLICK_EVENT_send.addEventListener("click", async () => {
+window.addEventListener("beforeunload", () => {
+  if (writer) writer.releaseLock();
+  if (reader) reader.releaseLock();
+  if (port) port.close();
+});
+
+function readWithTimeout(ms) {
+  return Promise.race([
+    reader.read(),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Read timeout")), ms)
+    ),
+  ]);
+}
+
+btnSend.addEventListener("click", async () => {
+  if (!isConnected()) { situationEl.textContent = "Not connected"; return; }
+  if (isOperating) return;
+  isOperating = true;
   try {
     await writer.write(new TextEncoder().encode("1002\n"));
     setDot("loading");
-    situation_alert.textContent = "Sending...";
+    situationEl.textContent = "Sending...";
     for (let i = 0; i < 9; i++) {
       await new Promise(resolve => setTimeout(resolve, 100));
-      const data = `${i}:${settings[i]}`;
-      await writer.write(new TextEncoder().encode(data));
+      await writer.write(new TextEncoder().encode(`${i}:${settings[i]}`));
     }
     setDot("connected");
-    situation_alert.textContent = "Sent";
+    situationEl.textContent = "Sent";
   } catch (error) {
     setDot("error");
-    console.error("Error in send:", error);
+    situationEl.textContent = "Send failed";
+    console.error("Send error:", error);
+  } finally {
+    isOperating = false;
   }
 });
 
-BUTTON_CLICK_EVENT_request.addEventListener("click", async () => {
+btnRequest.addEventListener("click", async () => {
+  if (!isConnected()) { situationEl.textContent = "Not connected"; return; }
+  if (isOperating) return;
+  isOperating = true;
   try {
     await writer.write(new TextEncoder().encode("1000\n"));
     setDot("loading");
-    situation_alert.textContent = "Receiving...";
+    situationEl.textContent = "Receiving...";
 
-    for (let i = 0; i <= 8; i++) {
-      let isMatched = false;
+    let buf = "";
+    let received = 0;
 
-      while (!isMatched) {
-        const data = await reader.read();
-        const decodedData = new TextDecoder().decode(data.value);
+    while (received < 9) {
+      const { value, done } = await readWithTimeout(3000);
+      if (done) break;
+      buf += new TextDecoder().decode(value);
+      const lines = buf.split("\n");
+      buf = lines.pop(); // keep incomplete trailing chunk
 
-        const parts = decodedData.trim().split(":");
-        if (parts.length === 2) {
-          const [index, value] = parts;
-          const textElement = document.getElementById(`text${i}`);
-          const volumeSlider = document.getElementById(`volumeSlider${i}`);
-
-          settings[i] = value;
-          volumeSlider.value = settings[i];
-          textElement.textContent = settings[i];
-
-          isMatched = true;
-        } else {
-          console.warn(`Invalid data format received: ${decodedData}`);
-        }
+      for (const line of lines) {
+        const parts = line.trim().split(":");
+        if (parts.length !== 2) continue;
+        const idx = parseInt(parts[0]);
+        const val = parseInt(parts[1]);
+        if (isNaN(idx) || isNaN(val) || idx < 0 || idx > 8) continue;
+        settings[idx] = val;
+        document.getElementById(`volumeSlider${idx}`).value = val;
+        document.getElementById(`text${idx}`).textContent = val;
+        received++;
       }
     }
+
     setDot("connected");
-    situation_alert.textContent = "Done";
+    situationEl.textContent = "Done";
   } catch (error) {
     setDot("error");
-    console.error("Error in request:", error);
+    situationEl.textContent = error.message === "Read timeout" ? "Timeout" : "Request failed";
+    console.error("Request error:", error);
+  } finally {
+    isOperating = false;
   }
 });
 
-BUTTON_CLICK_EVENT_save.addEventListener("click", async () => {
-  await writer.write(new TextEncoder().encode("1001\n"));
-  console.log("1001_saved");
-  setDot("connected");
-  situation_alert.textContent = "Saved";
+btnSave.addEventListener("click", async () => {
+  if (!isConnected()) { situationEl.textContent = "Not connected"; return; }
+  if (isOperating) return;
+  try {
+    await writer.write(new TextEncoder().encode("1001\n"));
+    setDot("connected");
+    situationEl.textContent = "Saved";
+  } catch (error) {
+    setDot("error");
+    situationEl.textContent = "Save failed";
+    console.error("Save error:", error);
+  }
 });
-
-for (let i = 0; i <= 8; i++) {
-  const textElement = document.getElementById(`text${i}`);
-  const volumeSlider = document.getElementById(`volumeSlider${i}`);
-
-  volumeSlider.addEventListener("input", () => {
-    const volume = volumeSlider.value;
-    textElement.textContent = volume;
-    settings[i] = volumeSlider.value;
-  });
-}
-
-for (let i = 0; i <= 8; i++) {
-  const textElement = document.getElementById(`text${i}`);
-  const volumeSlider = document.getElementById(`volumeSlider${i}`);
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const volume = volumeSlider.value;
-    textElement.textContent = volume;
-    settings[i] = volumeSlider.value;
-  });
-}
